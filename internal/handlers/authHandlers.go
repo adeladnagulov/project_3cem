@@ -5,26 +5,57 @@ import (
 	"log"
 	"net/http"
 	"project_3sem/internal/repositories"
+	"project_3sem/internal/services"
+	"strconv"
 )
 
 type UserHandle struct {
-	Repo repositories.RepoMemUs
+	RepoUsers repositories.RepoMemUs
+	RepoCodes repositories.RepoMemCode
 }
 
-func NewUserHandler(repo repositories.RepoMemUs) *UserHandle {
-	return &UserHandle{Repo: repo}
+func NewUserHandler(repoUs repositories.RepoMemUs, repoCode repositories.RepoMemCode) *UserHandle {
+	return &UserHandle{
+		RepoUsers: repoUs,
+		RepoCodes: repoCode,
+	}
 }
 
-func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("Email \"%s\" request err: %s", req.Email, err)
-		http.Error(w, "login failed", http.StatusInternalServerError)
+		http.Error(w, "Uncurrect email, err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	//отправляет код на почту и возращает верный ли ответ
-	h.Repo.Authorization(req.Email) //если да то входит в аккаунт или создает нового и входит
+	code := services.CreateCode()
+	err := services.SendCodeToEmail(req.Email, strconv.Itoa(code))
+	if err != nil {
+		log.Printf("Send code error: %s", err)
+		http.Error(w, "Send code error", http.StatusInternalServerError)
+		return
+	}
+
+	h.RepoCodes.AddNewCode(code, req.Email)
+
+	log.Printf("Send code Done")
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Email string `json:"email"`
+		Code  int    `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Email: \"%s\", code: %d request err: %s", req.Email, req.Code, err)
+		http.Error(w, "Uncurrect email or code err: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+	//реализовать хранение кода
+	//проверка кода
+	//авторизация
+	//вернуть ответ
 }
