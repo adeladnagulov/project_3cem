@@ -14,7 +14,8 @@ func main() {
 	handleUsers := handlers.NewUserHandler(repositories.NewMemoryRepoUsers(), repositories.NewMemoryRepoCodes())
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/auth/login/", handleUsers.SendAuthCode).Methods("POST")
+	r.HandleFunc("/api/v1/auth/login/confirmation/", handleUsers.Authorization).Methods("POST")
 
-	fmt.Print("Start server to: 8080")
+	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

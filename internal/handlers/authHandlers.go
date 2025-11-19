@@ -49,13 +49,28 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 		Email string `json:"email"`
 		Code  int    `json:"code"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("Email: \"%s\", code: %d request err: %s", req.Email, req.Code, err)
 		http.Error(w, "Uncurrect email or code err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	//реализовать хранение кода
-	//проверка кода
-	//авторизация
-	//вернуть ответ
+
+	ok, err := h.RepoCodes.ValidateCode(req.Code, req.Email)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !ok {
+		log.Printf("Uncurrected code: %d", req.Code)
+		http.Error(w, "Uncurrected code", http.StatusBadRequest)
+		return
+	}
+	log.Printf("Code accepted")
+
+	u := h.RepoUsers.Authorization(req.Email)
+
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(u)
 }

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"errors"
 	"log"
 	"project_3sem/internal/models"
 	"sync"
@@ -9,6 +10,7 @@ import (
 
 type RepoMemCode interface {
 	AddNewCode(code int, creator string)
+	ValidateCode(code int, email string) (bool, error)
 }
 
 type MemoryRepoCodes struct {
@@ -37,4 +39,18 @@ func (r *MemoryRepoCodes) AddNewCode(code int, creator string) {
 	}
 	r.Codes[creator] = &c
 	log.Printf("AddCode: %d with creator: %s", code, creator)
+}
+
+func (r *MemoryRepoCodes) ValidateCode(code int, email string) (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if _, ok := r.Codes[email]; !ok {
+		log.Printf("Code missing in repo")
+		return false, errors.New("code no exist")
+	}
+	if time.Now().After(r.Codes[email].ExpiresAt) {
+		return false, nil
+	}
+	return code == r.Codes[email].Value, nil
 }
