@@ -4,9 +4,11 @@ import (
 	"log"
 	"project_3sem/internal/models"
 	"sync"
+
+	"github.com/google/uuid"
 )
 
-type RepoMemUs interface {
+type RepoUsers interface {
 	Authorization(email string) *models.User
 }
 
@@ -27,6 +29,7 @@ func (r *MemoryRepoUsers) Authorization(email string) *models.User {
 
 	if _, ok := r.Users[email]; !ok {
 		u := &models.User{
+			ID:    uuid.NewString(),
 			Email: email,
 		}
 		r.Users[email] = u

@@ -4,17 +4,21 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"project_3sem/internal/models"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/services"
 	"strconv"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type UserHandle struct {
-	RepoUsers repositories.RepoMemUs
+	RepoUsers repositories.RepoUsers
 	RepoCodes repositories.RepoMemCode
 }
 
-func NewUserHandler(repoUs repositories.RepoMemUs, repoCode repositories.RepoMemCode) *UserHandle {
+func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode) *UserHandle {
 	return &UserHandle{
 		RepoUsers: repoUs,
 		RepoCodes: repoCode,
@@ -69,8 +73,27 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Code accepted")
 
 	u := h.RepoUsers.Authorization(req.Email)
+	token, err := GenerateJWTToken(u)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(u)
+	_ = json.NewEncoder(w).Encode(token)
+}
+
+var jwtSecret = []byte("My_super_secret_key")
+
+func GenerateJWTToken(u *models.User) (string, error) {
+	claims := jwt.MapClaims{
+		"user": map[string]string{
+			"id":    u.ID,
+			"email": u.Email,
+		},
+		"exp": time.Now().Add(24 * time.Hour).Unix(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(jwtSecret)
 }
