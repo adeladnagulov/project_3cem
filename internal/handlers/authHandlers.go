@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"project_3sem/internal/models"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/services"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/joho/godotenv"
 )
 
 type UserHandle struct {
@@ -84,9 +86,12 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(token)
 }
 
-var jwtSecret = []byte("My_super_secret_key")
-
 func GenerateJWTToken(u *models.User) (string, error) {
+	err := godotenv.Load()
+	if err != nil {
+		return "", err
+	}
+	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
 	claims := jwt.MapClaims{
 		"user": map[string]string{
 			"id":    u.ID,
