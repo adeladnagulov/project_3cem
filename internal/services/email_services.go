@@ -11,8 +11,21 @@ import (
 var maxValueCode = 999999
 var minValueCode = 111111
 
-func SendCodeToEmail(email, code string) error {
+type EmailService interface {
+	SendCodeToEmail(email, code string) error
+	CreateCode() int
+	ValidateEmail(email string) error
+}
 
+type MyEmailService struct {
+}
+
+func CreateEmailService() *MyEmailService {
+	return &MyEmailService{}
+}
+
+func (s *MyEmailService) SendCodeToEmail(email, code string) error {
+	//при добавлении редиса добавить ограничение по кол-ву писем
 	m := gomail.NewMessage()
 	m.SetHeader("From", "adnagulovadel@gmail.com")
 	m.SetHeader("To", email)
@@ -28,11 +41,11 @@ func SendCodeToEmail(email, code string) error {
 	return d.DialAndSend(m)
 }
 
-func CreateCode() int {
+func (s *MyEmailService) CreateCode() int {
 	return rand.IntN(maxValueCode-minValueCode) + minValueCode
 }
 
-func ValidateEmail(email string) error {
+func (s *MyEmailService) ValidateEmail(email string) error {
 	if strings.Contains(email, "@") && len(email) > 3 {
 		return nil
 	}

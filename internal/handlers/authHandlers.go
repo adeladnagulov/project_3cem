@@ -16,14 +16,16 @@ import (
 )
 
 type UserHandle struct {
-	RepoUsers repositories.RepoUsers
-	RepoCodes repositories.RepoMemCode
+	RepoUsers    repositories.RepoUsers
+	RepoCodes    repositories.RepoMemCode
+	EmailService services.EmailService
 }
 
-func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode) *UserHandle {
+func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode, emailSer services.MyEmailService) *UserHandle {
 	return &UserHandle{
-		RepoUsers: repoUs,
-		RepoCodes: repoCode,
+		RepoUsers:    repoUs,
+		RepoCodes:    repoCode,
+		EmailService: &emailSer,
 	}
 }
 
@@ -36,13 +38,13 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Uncurrect email, err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	code := services.CreateCode()
-	if err := services.ValidateEmail(req.Email); err != nil {
+	code := h.EmailService.CreateCode()
+	if err := h.EmailService.ValidateEmail(req.Email); err != nil {
 		log.Printf("Email \"%s\" request err: %s", req.Email, err)
 		http.Error(w, "unacceptable email, err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := services.SendCodeToEmail(req.Email, strconv.Itoa(code))
+	err := h.EmailService.SendCodeToEmail(req.Email, strconv.Itoa(code))
 	if err != nil {
 		log.Printf("Send code error: %s", err)
 		http.Error(w, "Send code error", http.StatusInternalServerError)
