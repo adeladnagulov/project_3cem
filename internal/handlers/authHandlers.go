@@ -8,7 +8,6 @@ import (
 	"project_3sem/internal/models"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/services"
-	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -44,7 +43,7 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unacceptable email, err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
-	err := h.EmailService.SendCodeToEmail(req.Email, strconv.Itoa(code))
+	err := h.EmailService.SendCodeToEmail(req.Email, code)
 	if err != nil {
 		log.Printf("Send code error: %s", err)
 		http.Error(w, "Send code error", http.StatusInternalServerError)
@@ -60,11 +59,11 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
-		Code  int    `json:"code"`
+		Code  string `json:"code"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Printf("Email: \"%s\", code: %d request err: %s", req.Email, req.Code, err)
+		log.Printf("Email: \"%s\", code: %s request err: %s", req.Email, req.Code, err)
 		http.Error(w, "Uncurrect email or code err: "+err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -75,7 +74,7 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !ok {
-		log.Printf("Uncurrected code: %d", req.Code)
+		log.Printf("Uncurrected code: %s", req.Code)
 		http.Error(w, "Uncurrected code", http.StatusBadRequest)
 		return
 	}

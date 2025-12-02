@@ -3,6 +3,6 @@ package models
 import "time"
 
 type Code struct {
-	Value     int
+	Value     string
 	ExpiresAt time.Time
 }

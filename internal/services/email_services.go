@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"math/rand/v2"
+	"strconv"
 	"strings"
 
 	"gopkg.in/gomail.v2"
@@ -13,7 +14,7 @@ var minValueCode = 111111
 
 type EmailService interface {
 	SendCodeToEmail(email, code string) error
-	CreateCode() int
+	CreateCode() string
 	ValidateEmail(email string) error
 }
 
@@ -41,8 +42,9 @@ func (s *MyEmailService) SendCodeToEmail(email, code string) error {
 	return d.DialAndSend(m)
 }
 
-func (s *MyEmailService) CreateCode() int {
-	return rand.IntN(maxValueCode-minValueCode) + minValueCode
+func (s *MyEmailService) CreateCode() string {
+	codeInt := rand.IntN(maxValueCode-minValueCode) + minValueCode
+	return strconv.Itoa(codeInt)
 }
 
 func (s *MyEmailService) ValidateEmail(email string) error {

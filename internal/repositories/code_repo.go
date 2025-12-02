@@ -9,8 +9,8 @@ import (
 )
 
 type RepoMemCode interface {
-	AddNewCode(code int, creator string)
-	ValidateCode(code int, email string) (bool, error)
+	AddNewCode(code string, creator string)
+	ValidateCode(code string, email string) (bool, error)
 }
 
 type MemoryRepoCodes struct {
@@ -24,7 +24,7 @@ func NewMemoryRepoCodes() *MemoryRepoCodes {
 	}
 }
 
-func (r *MemoryRepoCodes) AddNewCode(code int, creator string) {
+func (r *MemoryRepoCodes) AddNewCode(code string, creator string) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -38,10 +38,10 @@ func (r *MemoryRepoCodes) AddNewCode(code int, creator string) {
 		ExpiresAt: time.Now().Add(time.Minute * 5),
 	}
 	r.Codes[creator] = &c
-	log.Printf("AddCode: %d with creator: %s", code, creator)
+	log.Printf("AddCode: %s with creator: %s", code, creator)
 }
 
-func (r *MemoryRepoCodes) ValidateCode(code int, email string) (bool, error) {
+func (r *MemoryRepoCodes) ValidateCode(code string, email string) (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
