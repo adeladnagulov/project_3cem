@@ -40,13 +40,13 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 	code := h.EmailService.CreateCode()
 	if err := h.EmailService.ValidateEmail(req.Email); err != nil {
 		log.Printf("Email \"%s\" request err: %s", req.Email, err)
-		http.Error(w, "unacceptable email, err: "+err.Error(), http.StatusBadRequest)
+		http.Error(w, "unacceptable email, err: "+err.Error(), http.StatusUnauthorized)
 		return
 	}
 	err := h.EmailService.SendCodeToEmail(req.Email, code)
 	if err != nil {
 		log.Printf("Send code error: %s", err)
-		http.Error(w, "Send code error", http.StatusInternalServerError)
+		http.Error(w, "Send code error", http.StatusTooManyRequests)
 		return
 	}
 

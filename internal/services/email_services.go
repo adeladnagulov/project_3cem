@@ -5,6 +5,7 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/gomail.v2"
 )
@@ -19,14 +20,25 @@ type EmailService interface {
 }
 
 type MyEmailService struct {
+	LastMessage map[string]time.Time
 }
 
 func CreateEmailService() *MyEmailService {
-	return &MyEmailService{}
+	return &MyEmailService{
+		LastMessage: map[string]time.Time{},
+	}
 }
 
 func (s *MyEmailService) SendCodeToEmail(email, code string) error {
-	//при добавлении редиса добавить ограничение по кол-ву писем
+	//при добавлении редиса добавить удаление старых писем
+	lastT, ok := s.LastMessage[email]
+	if ok {
+		if lastT.Add(time.Minute).After(time.Now()) {
+			return errors.New("wait a minute to resend")
+		}
+	}
+	s.LastMessage[email] = time.Now()
+
 	m := gomail.NewMessage()
 	m.SetHeader("From", "adnagulovadel@gmail.com")
 	m.SetHeader("To", email)
