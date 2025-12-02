@@ -1,7 +1,9 @@
 package services
 
 import (
+	"errors"
 	"math/rand/v2"
+	"strings"
 
 	"gopkg.in/gomail.v2"
 )
@@ -28,4 +30,11 @@ func SendCodeToEmail(email, code string) error {
 
 func CreateCode() int {
 	return rand.IntN(maxValueCode-minValueCode) + minValueCode
+}
+
+func ValidateEmail(email string) error {
+	if strings.Contains(email, "@") && len(email) > 3 {
+		return nil
+	}
+	return errors.New("unacceptable email")
 }

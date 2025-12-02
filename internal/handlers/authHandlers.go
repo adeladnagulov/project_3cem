@@ -37,6 +37,11 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	code := services.CreateCode()
+	if err := services.ValidateEmail(req.Email); err != nil {
+		log.Printf("Email \"%s\" request err: %s", req.Email, err)
+		http.Error(w, "unacceptable email, err: "+err.Error(), http.StatusBadRequest)
+		return
+	}
 	err := services.SendCodeToEmail(req.Email, strconv.Itoa(code))
 	if err != nil {
 		log.Printf("Send code error: %s", err)
