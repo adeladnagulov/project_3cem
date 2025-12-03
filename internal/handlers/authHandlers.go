@@ -4,27 +4,23 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
-	"project_3sem/internal/models"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/services"
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/joho/godotenv"
 )
 
 type UserHandle struct {
 	RepoUsers    repositories.RepoUsers
 	RepoCodes    repositories.RepoMemCode
 	EmailService services.EmailService
+	TokenService services.TokenService
 }
 
-func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode, emailSer services.MyEmailService) *UserHandle {
+func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode, emailSer services.MyEmailService, tokenSer services.TokenService) *UserHandle {
 	return &UserHandle{
 		RepoUsers:    repoUs,
 		RepoCodes:    repoCode,
 		EmailService: &emailSer,
+		TokenService: tokenSer,
 	}
 }
 
@@ -81,30 +77,26 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	log.Printf("Code accepted")
 
 	u := h.RepoUsers.Authorization(req.Email)
-	token, err := GenerateJWTToken(u)
+	accessToken, err := h.TokenService.GenerateAccessToken(u)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	refreshToken := h.TokenService.GenerateRefreshToken(u)
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HttpOnly: true,
+		Path:     "/",
+		MaxAge:   24 * 60 * 60,
+	})
+
+	token := map[string]interface{}{
+		"accessToken": accessToken,
+		"token_type":  "Bearer",
+	}
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(token)
-}
-
-func GenerateJWTToken(u *models.User) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return "", err
-	}
-	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
-	claims := jwt.MapClaims{
-		"user": map[string]string{
-			"id":    u.ID,
-			"email": u.Email,
-		},
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtSecret)
 }
