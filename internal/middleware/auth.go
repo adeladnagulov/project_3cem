@@ -1,4 +1,4 @@
-package middlewera
+package middleware
 
 import (
 	"context"
@@ -14,7 +14,7 @@ const (
 	EmailKey ctxKey = "email"
 )
 
-func AuthMiddlewera(ts *services.TokenServiceSrtuct, next http.Handler) http.Handler {
+func AuthMiddlewera(ts *services.TokenServiceRepo, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token := r.Header.Get("Authorization")
 		if token == "" {

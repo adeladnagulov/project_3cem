@@ -10,6 +10,7 @@ import (
 
 type RepoUsers interface {
 	Authorization(email string) *models.User
+	GetUserByID(id string) *models.User
 }
 
 type MemoryRepoUsers struct {
@@ -39,4 +40,15 @@ func (r *MemoryRepoUsers) Authorization(email string) *models.User {
 		log.Printf("Put in memoryRepo user to email: %s", email)
 		return r.Users[email]
 	}
+}
+
+func (r *MemoryRepoUsers) GetUserByID(id string) *models.User {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, u := range r.Users {
+		if u.ID == id {
+			return u
+		}
+	}
+	return nil
 }

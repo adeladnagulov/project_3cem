@@ -28,6 +28,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
 	r.HandleFunc("/api/v1/auth/confirm", handleUsers.Authorization).Methods("POST")
+	r.HandleFunc("/api/v1/auth/refresh", handleUsers.RefreshHandler).Methods("POST")
 
 	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

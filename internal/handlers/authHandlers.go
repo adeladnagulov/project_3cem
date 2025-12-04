@@ -79,6 +79,7 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	u := h.RepoUsers.Authorization(req.Email)
 	accessToken, err := h.TokenService.GenerateAccessToken(u)
 	if err != nil {
+		log.Printf("GenerateAccessToken errpr: %s", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -89,14 +90,52 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 		Value:    refreshToken,
 		HttpOnly: true,
 		Path:     "/",
-		MaxAge:   24 * 60 * 60,
+		MaxAge:   7 * 24 * 60 * 60,
 	})
 
-	token := map[string]interface{}{
+	resp := map[string]interface{}{
+		"accessToken": accessToken,
+		"token_type":  "Bearer",
+		"expires_in":  900,
+	}
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (h *UserHandle) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		log.Printf("get token from cookie error: %s", err)
+		http.Error(w, "No refresh token in cookie", http.StatusUnauthorized)
+		return
+	}
+
+	id, ok := h.TokenService.ValidateRefreshToken(cookie.Value)
+	if !ok {
+		log.Printf("invalid refresh token: %s", id)
+		http.Error(w, "invalid refresh token", http.StatusUnauthorized)
+		return
+	}
+
+	user := h.RepoUsers.GetUserByID(id)
+	if user == nil {
+		log.Printf("user == nil")
+		http.Error(w, "invalid user", http.StatusUnauthorized)
+		return
+	}
+	accessToken, err := h.TokenService.GenerateAccessToken(user)
+	if err != nil {
+		log.Printf("GenerateAccessToken error: %s", id)
+		http.Error(w, "Access Token error", http.StatusInternalServerError)
+		return
+	}
+
+	resp := map[string]interface{}{
 		"accessToken": accessToken,
 		"token_type":  "Bearer",
 	}
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(token)
+	_ = json.NewEncoder(w).Encode(resp)
 }

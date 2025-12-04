@@ -17,20 +17,20 @@ type TokenService interface {
 	ValidateRefreshToken(token string) (string, bool)
 }
 
-type TokenServiceSrtuct struct {
+type TokenServiceRepo struct {
 	jwtSecret     []byte
 	mu            sync.RWMutex
 	refreshTokens map[string]string
 }
 
-func NewTokenService(jwtSecret string) *TokenServiceSrtuct {
-	return &TokenServiceSrtuct{
+func NewTokenService(jwtSecret string) *TokenServiceRepo {
+	return &TokenServiceRepo{
 		jwtSecret:     []byte(jwtSecret),
 		refreshTokens: make(map[string]string),
 	}
 }
 
-func (ts *TokenServiceSrtuct) GenerateAccessToken(u *models.User) (string, error) {
+func (ts *TokenServiceRepo) GenerateAccessToken(u *models.User) (string, error) {
 	claims := jwt.MapClaims{
 		"id":    u.ID,
 		"email": u.Email,
@@ -42,7 +42,7 @@ func (ts *TokenServiceSrtuct) GenerateAccessToken(u *models.User) (string, error
 	return token.SignedString(ts.jwtSecret)
 }
 
-func (ts *TokenServiceSrtuct) ValidateAccessToken(tokenString string) (*models.User, error) {
+func (ts *TokenServiceRepo) ValidateAccessToken(tokenString string) (*models.User, error) {
 	token, err := jwt.Parse(tokenString, func(t *jwt.Token) (any, error) {
 		return ts.jwtSecret, nil
 	})
@@ -67,7 +67,7 @@ func (ts *TokenServiceSrtuct) ValidateAccessToken(tokenString string) (*models.U
 	return &u, nil
 }
 
-func (ts *TokenServiceSrtuct) GenerateRefreshToken(u *models.User) string {
+func (ts *TokenServiceRepo) GenerateRefreshToken(u *models.User) string {
 	token := uuid.New().String()
 	ts.mu.Lock()
 	ts.refreshTokens[token] = u.ID
@@ -75,7 +75,7 @@ func (ts *TokenServiceSrtuct) GenerateRefreshToken(u *models.User) string {
 	return token
 }
 
-func (ts *TokenServiceSrtuct) ValidateRefreshToken(token string) (string, bool) {
+func (ts *TokenServiceRepo) ValidateRefreshToken(token string) (string, bool) {
 	ts.mu.RLock()
 	id, ok := ts.refreshTokens[token]
 	ts.mu.RUnlock()
