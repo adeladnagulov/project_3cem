@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"project_3sem/internal/services"
 	"strings"
@@ -31,6 +32,7 @@ func AuthMiddlewera(ts *services.TokenServiceRepo, next http.Handler) http.Handl
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+		log.Printf("token valid")
 		ctx := context.WithValue(r.Context(), IdKey, u.ID)
 		ctx = context.WithValue(ctx, EmailKey, u.Email)
 		next.ServeHTTP(w, r.WithContext(ctx))
