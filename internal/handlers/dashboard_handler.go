@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"project_3sem/internal/middleware"
+	"project_3sem/internal/responses"
 )
 
 func (h *UserHandle) DashboardHandler(w http.ResponseWriter, r *http.Request) {
@@ -14,7 +14,5 @@ func (h *UserHandle) DashboardHandler(w http.ResponseWriter, r *http.Request) {
 		"id":    id,
 		"email": email,
 	}
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	responses.SendJSONResp(w, resp, http.StatusOK)
 }

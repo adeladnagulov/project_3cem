@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"project_3sem/internal/repositories"
+	"project_3sem/internal/responses"
 	"project_3sem/internal/services"
 )
 
@@ -98,9 +99,7 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 		"token_type":  "Bearer",
 		"expires_in":  900,
 	}
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	responses.SendJSONResp(w, resp, http.StatusOK)
 }
 
 func (h *UserHandle) RefreshHandler(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +134,5 @@ func (h *UserHandle) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		"accessToken": accessToken,
 		"token_type":  "Bearer",
 	}
-	w.Header().Set("Content-type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
+	responses.SendJSONResp(w, resp, http.StatusOK)
 }

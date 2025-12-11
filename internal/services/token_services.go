@@ -10,6 +10,8 @@ import (
 	"github.com/google/uuid"
 )
 
+var lifetime int = 15
+
 type TokenService interface {
 	GenerateAccessToken(u *models.User) (string, error)
 	ValidateAccessToken(tokenString string) (*models.User, error)
@@ -35,7 +37,7 @@ func (ts *TokenServiceRepo) GenerateAccessToken(u *models.User) (string, error) 
 		"id":    u.ID,
 		"email": u.Email,
 		"iat":   time.Now().Unix(),
-		"exp":   time.Now().Add(5 * time.Minute).Unix(),
+		"exp":   time.Now().Add(time.Duration(lifetime) * time.Minute).Unix(),
 		"type":  "access",
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
