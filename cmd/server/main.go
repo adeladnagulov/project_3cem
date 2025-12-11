@@ -27,6 +27,9 @@ func main() {
 		*services.CreateEmailService(),
 		tokenService,
 	)
+	handleSite := handlers.SiteHandle{
+		RepoSite: repositories.NewMemoryRepoSites(),
+	}
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
 	r.HandleFunc("/api/v1/auth/confirm", handleUsers.Authorization).Methods("POST")
@@ -37,6 +40,7 @@ func main() {
 		return middleware.AuthMiddlewera(tokenService, next)
 	})
 	protected.HandleFunc("/dashboard", handleUsers.DashboardHandler).Methods("POST")
+	protected.HandleFunc("/sites/save", handleSite.SaveDraft).Methods("POST")
 
 	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
