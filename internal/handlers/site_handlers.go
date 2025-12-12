@@ -71,3 +71,28 @@ func (h *SiteHandle) Publish(w http.ResponseWriter, r *http.Request) {
 	}
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }
+
+func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
+	subI := r.Context().Value(middleware.SubdomainKey)
+	if subI == nil {
+		log.Printf("no subdomain provided")
+		http.Error(w, "no subdomain provided", http.StatusBadRequest)
+		return
+	}
+	subD := subI.(string)
+
+	site := h.RepoSite.GetPublishBySubdomain(subD)
+	if site == nil {
+		log.Printf("not found site")
+		http.Error(w, "not found site", http.StatusNotFound)
+		return
+	}
+
+	resp := map[string]interface{}{
+		"id":        site.ID,
+		"subdomain": site.Subdomain,
+		"pattern":   site.Pattern,
+		"config":    site.Config,
+	}
+	responses.SendJSONResp(w, resp, http.StatusOK)
+}

@@ -21,7 +21,7 @@ func SubdomainMiddlewera(next http.Handler) http.Handler {
 		if len(parts) >= 2 {
 			sub := parts[0]
 			if sub != "localhost" && sub != "127" {
-				ctx := context.WithValue(r.Context(), SubdomainKey, sub[0])
+				ctx := context.WithValue(r.Context(), SubdomainKey, sub)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}

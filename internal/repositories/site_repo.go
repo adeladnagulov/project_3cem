@@ -12,6 +12,7 @@ import (
 type RepoSite interface {
 	AddDrawtToRepo(subdomain, pattern, userId string, config map[string]interface{}) (*models.Site, error)
 	PublishSite(siteId string) (*models.Site, error)
+	GetPublishBySubdomain(subdomain string) *models.Site
 	CheckSubdomainInFree(subdomain string) bool
 }
 
@@ -70,6 +71,19 @@ func (r *MemoryRepoSites) PublishSite(siteId string) (*models.Site, error) {
 	site.Status = "published"
 	site.PublishdAt = time.Now()
 	return site, nil
+}
+
+func (r *MemoryRepoSites) GetPublishBySubdomain(subdomain string) *models.Site {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, s := range r.Sites {
+		if s.Subdomain == subdomain && s.Status == "published" {
+			rez := s
+			return rez
+		}
+	}
+	return nil
 }
 
 func (r *MemoryRepoSites) CheckSubdomainInFree(subdomain string) bool {

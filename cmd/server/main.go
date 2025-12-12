@@ -46,6 +46,8 @@ func main() {
 	protected.HandleFunc("/sites/save", handleSite.SaveDraft).Methods("POST")
 	protected.HandleFunc("/sites/{id}/publish", handleSite.Publish).Methods("POST")
 
+	r.HandleFunc("/", handleSite.RenderSite).Methods("GET")
+
 	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
