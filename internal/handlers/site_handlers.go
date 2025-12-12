@@ -7,6 +7,8 @@ import (
 	"project_3sem/internal/middleware"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/responses"
+
+	"github.com/gorilla/mux"
 )
 
 type SiteHandle struct {
@@ -48,4 +50,24 @@ func (h *SiteHandle) SaveDraft(w http.ResponseWriter, r *http.Request) {
 		"status":    site.Status,
 	}
 	responses.SendJSONResp(w, resp, http.StatusCreated)
+}
+
+func (h *SiteHandle) Publish(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	siteId := vars["id"]
+	log.Printf("site id: %s", siteId)
+
+	site, err := h.RepoSite.PublishSite(siteId)
+	if err != nil {
+		log.Printf("publish error: %s", err.Error())
+		http.Error(w, "cannot publish", http.StatusBadRequest)
+		return
+	}
+	log.Printf("site status: %s", site.Status)
+	resp := map[string]interface{}{
+		"id":        site.ID,
+		"subdomain": site.Subdomain,
+		"status":    site.Status,
+	}
+	responses.SendJSONResp(w, resp, http.StatusOK)
 }

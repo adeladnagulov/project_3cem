@@ -11,6 +11,7 @@ import (
 
 type RepoSite interface {
 	AddDrawtToRepo(subdomain, pattern, userId string, config map[string]interface{}) (*models.Site, error)
+	PublishSite(siteId string) (*models.Site, error)
 	CheckSubdomainInFree(subdomain string) bool
 }
 
@@ -51,6 +52,23 @@ func (r *MemoryRepoSites) AddDrawtToRepo(subdomain, pattern, userId string, conf
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.Sites[site.ID] = site
+	return site, nil
+}
+
+func (r *MemoryRepoSites) PublishSite(siteId string) (*models.Site, error) {
+	r.mu.RLock()
+	site, ok := r.Sites[siteId]
+	if !ok {
+		return nil, errors.New("site not sound")
+	}
+	r.mu.RUnlock()
+	if !r.CheckSubdomainInFree(site.Subdomain) {
+		return nil, errors.New("subdomain already taken")
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	site.Status = "published"
+	site.PublishdAt = time.Now()
 	return site, nil
 }
 

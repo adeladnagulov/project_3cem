@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -13,6 +14,7 @@ const (
 func SubdomainMiddlewera(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		host := r.Host
+		log.Printf("host: %s", host)
 
 		host = strings.Split(host, ":")[0]
 		parts := strings.Split(host, ".")
