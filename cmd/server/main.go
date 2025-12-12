@@ -31,6 +31,9 @@ func main() {
 		RepoSite: repositories.NewMemoryRepoSites(),
 	}
 	r := mux.NewRouter()
+	r.Use(func(next http.Handler) http.Handler {
+		return middleware.SubdomainMiddlewera(next)
+	})
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
 	r.HandleFunc("/api/v1/auth/confirm", handleUsers.Authorization).Methods("POST")
 	r.HandleFunc("/api/v1/auth/refresh", handleUsers.RefreshHandler).Methods("POST")

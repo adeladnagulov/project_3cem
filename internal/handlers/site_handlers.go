@@ -33,7 +33,7 @@ func (h *SiteHandle) SaveDraft(w http.ResponseWriter, r *http.Request) {
 
 	userId := r.Context().Value(middleware.IdKey).(string)
 
-	site, err := h.RepoSite.AddDrawtToRepo(req.Subdomain, r.Pattern, userId, req.Config)
+	site, err := h.RepoSite.AddDrawtToRepo(req.Subdomain, req.Pattern, userId, req.Config)
 	if err != nil {
 		log.Printf("bad request, error :%s", err.Error())
 		http.Error(w, "invalid params, err: "+err.Error(), http.StatusBadRequest)

@@ -11,8 +11,8 @@ func (h *UserHandle) DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	email := r.Context().Value(middleware.EmailKey).(string)
 
 	resp := map[string]interface{}{
-		"id":    id,
-		"email": email,
+		"user_id": id,
+		"email":   email,
 	}
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }
