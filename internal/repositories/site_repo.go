@@ -11,6 +11,7 @@ import (
 
 type RepoSite interface {
 	AddDrawtToRepo(subdomain, pattern, userId string, config map[string]interface{}) (*models.Site, error)
+	CheckSubdomainInFree(subdomain string) bool
 }
 
 type MemoryRepoSites struct {
@@ -32,7 +33,11 @@ func (r *MemoryRepoSites) AddDrawtToRepo(subdomain, pattern, userId string, conf
 		return nil, errors.New("invalid userId")
 	}
 
-	//добавить проверку поддомена
+	if subdomain == "" {
+		return nil, errors.New("invalid subdomain")
+	} else if !r.CheckSubdomainInFree(subdomain) {
+		return nil, errors.New("subdomain already taken")
+	}
 
 	site := &models.Site{
 		ID:        uuid.NewString(),
@@ -47,4 +52,15 @@ func (r *MemoryRepoSites) AddDrawtToRepo(subdomain, pattern, userId string, conf
 	defer r.mu.Unlock()
 	r.Sites[site.ID] = site
 	return site, nil
+}
+
+func (r *MemoryRepoSites) CheckSubdomainInFree(subdomain string) bool {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	for _, s := range r.Sites {
+		if s.Subdomain == subdomain && s.Status == "published" {
+			return false
+		}
+	}
+	return true
 }
