@@ -32,6 +32,9 @@ func main() {
 	}
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
+		return middleware.CORSmiddlewera(next)
+	})
+	r.Use(func(next http.Handler) http.Handler {
 		return middleware.SubdomainMiddlewera(next)
 	})
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
