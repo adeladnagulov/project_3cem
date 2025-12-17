@@ -21,8 +21,13 @@ func main() {
 	}
 	jwtSecret := os.Getenv("JWT_SECRET")
 	tokenService := services.NewTokenService(jwtSecret)
+	dbPostgres, err := repositories.NewPostgresDB()
+	if err != nil {
+		log.Fatalf("postgress error: %s", err.Error())
+	}
 	handleUsers := handlers.NewUserHandler(
-		repositories.NewMemoryRepoUsers(),
+		//repositories.NewMemoryRepoUsers(),
+		repositories.NewPgRepoUsers(dbPostgres),
 		repositories.NewMemoryRepoCodes(),
 		*services.CreateEmailService(),
 		tokenService,

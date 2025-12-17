@@ -77,7 +77,13 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Code accepted")
 
-	u := h.RepoUsers.Authorization(req.Email)
+	u, err := h.RepoUsers.Authorization(req.Email)
+	if err != nil {
+		log.Printf("Authorization error: %s", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	accessToken, err := h.TokenService.GenerateAccessToken(u)
 	if err != nil {
 		log.Printf("GenerateAccessToken errpr: %s", err)

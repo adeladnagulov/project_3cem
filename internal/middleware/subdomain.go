@@ -13,6 +13,10 @@ const (
 
 func SubdomainMiddlewera(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//host := r.Header.Get("X-Forwarded-Host")
+		//if host == "" {
+		//	host = r.Host
+		//}
 		host := r.Host
 		log.Printf("host: %s", host)
 

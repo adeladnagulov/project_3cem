@@ -9,7 +9,7 @@ import (
 )
 
 type RepoUsers interface {
-	Authorization(email string) *models.User
+	Authorization(email string) (*models.User, error)
 	GetUserByID(id string) *models.User
 }
 
@@ -24,7 +24,7 @@ func NewMemoryRepoUsers() *MemoryRepoUsers {
 	}
 }
 
-func (r *MemoryRepoUsers) Authorization(email string) *models.User {
+func (r *MemoryRepoUsers) Authorization(email string) (*models.User, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -35,10 +35,10 @@ func (r *MemoryRepoUsers) Authorization(email string) *models.User {
 		}
 		r.Users[email] = u
 		log.Printf("Add to memoryRepo new user to email: %s", email)
-		return u
+		return u, nil
 	} else {
 		log.Printf("Put in memoryRepo user to email: %s", email)
-		return r.Users[email]
+		return r.Users[email], nil
 	}
 }
 
