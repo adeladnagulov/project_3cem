@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"database/sql"
 	"errors"
 	"project_3sem/internal/models"
 	"sync"
@@ -69,7 +70,7 @@ func (r *MemoryRepoSites) PublishSite(siteId string) (*models.Site, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	site.Status = "published"
-	site.PublishdAt = time.Now()
+	site.PublishdAt = sql.NullTime{Time: time.Now(), Valid: true}
 	return site, nil
 }
 

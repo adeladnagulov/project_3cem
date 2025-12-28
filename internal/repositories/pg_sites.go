@@ -92,7 +92,25 @@ func (r *PgRepoSites) PublishSite(siteId string) (*models.Site, error) {
 }
 
 func (r *PgRepoSites) GetPublishBySubdomain(subdomain string) *models.Site {
-	return nil
+	site := models.Site{}
+	var cnfBytes []byte
+	err := r.db.QueryRow(`
+	SELECT id, user_id, subdomain, pattern, config, status_site, created_at, published_at
+    FROM sites WHERE subdomain = $1 AND status_site = 'published'`, subdomain).
+		Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &cnfBytes, &site.Status, &site.CreatedAt, &site.PublishdAt)
+	if err == sql.ErrNoRows {
+		log.Println(err.Error())
+		return nil
+	}
+	if err != nil {
+		log.Println(err.Error())
+		return nil
+	}
+	if err = json.Unmarshal(cnfBytes, &site.Config); err != nil {
+		log.Println(err.Error())
+		return nil
+	}
+	return &site
 }
 
 func (r *PgRepoSites) CheckSubdomainInFree(subdomain string) bool {
