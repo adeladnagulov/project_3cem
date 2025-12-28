@@ -73,6 +73,7 @@ func (h *SiteHandle) Publish(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
+	log.Printf("render start!")
 	subI := r.Context().Value(middleware.SubdomainKey)
 	if subI == nil {
 		log.Printf("no subdomain provided")
@@ -80,6 +81,12 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	subD := subI.(string)
+
+	if subD == "" { // 🔥 Проверяем пустую строку
+		log.Printf("empty subdomain")
+		http.Error(w, "no subdomain provided", http.StatusBadRequest)
+		return
+	}
 
 	site := h.RepoSite.GetPublishBySubdomain(subD)
 	if site == nil {
@@ -94,5 +101,6 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 		"pattern":   site.Pattern,
 		"config":    site.Config,
 	}
+	log.Printf("render done!")
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }

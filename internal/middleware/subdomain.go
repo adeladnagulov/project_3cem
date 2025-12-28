@@ -13,23 +13,29 @@ const (
 
 func SubdomainMiddlewera(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//host := r.Header.Get("X-Forwarded-Host")
-		//if host == "" {
-		//	host = r.Host
-		//}
-		host := r.Host
-		log.Printf("host: %s", host)
+		subdomain := r.Header.Get("X-Subdomain")
 
-		host = strings.Split(host, ":")[0]
-		parts := strings.Split(host, ".")
-		if len(parts) >= 2 {
-			sub := parts[0]
-			if sub != "localhost" && sub != "127" {
-				ctx := context.WithValue(r.Context(), SubdomainKey, sub)
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
+		if subdomain == "" {
+			host := r.Header.Get("X-Forwarded-Host")
+			if host == "" {
+				host = r.Host
+			}
+
+			if host != "" {
+				host = strings.Split(host, ":")[0]
+				parts := strings.Split(host, ".")
+
+				if len(parts) >= 2 && parts[1] == "localhost" {
+					subdomain = parts[0]
+				} else if len(parts) >= 3 && strings.Contains(host, "tunnel4.com") {
+					subdomain = parts[0]
+				}
 			}
 		}
-		next.ServeHTTP(w, r)
+
+		log.Printf("Subdomain: '%s'", subdomain)
+
+		ctx := context.WithValue(r.Context(), SubdomainKey, subdomain)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -33,15 +33,16 @@ func main() {
 		tokenService,
 	)
 	handleSite := handlers.SiteHandle{
-		RepoSite: repositories.NewMemoryRepoSites(),
+		RepoSite: repositories.NewPgRepoSites(dbPostgres), //repositories.NewMemoryRepoSites()
 	}
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
-		return middleware.CORSmiddlewera(next)
-	})
-	r.Use(func(next http.Handler) http.Handler {
 		return middleware.SubdomainMiddlewera(next)
 	})
+	r.Use(func(next http.Handler) http.Handler {
+		return middleware.CORSmiddlewera(next)
+	})
+
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
 	r.HandleFunc("/api/v1/auth/confirm", handleUsers.Authorization).Methods("POST")
 	r.HandleFunc("/api/v1/auth/refresh", handleUsers.RefreshHandler).Methods("POST")
@@ -54,7 +55,7 @@ func main() {
 	protected.HandleFunc("/sites/save", handleSite.SaveDraft).Methods("POST")
 	protected.HandleFunc("/sites/{id}/publish", handleSite.Publish).Methods("POST")
 
-	r.HandleFunc("/", handleSite.RenderSite).Methods("GET")
+	r.HandleFunc("/site-config", handleSite.RenderSite).Methods("GET")
 
 	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

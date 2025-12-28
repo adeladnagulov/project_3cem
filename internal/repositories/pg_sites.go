@@ -2,9 +2,11 @@ package repositories
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"log"
 	"project_3sem/internal/models"
+	"time"
 )
 
 type PgRepoSites struct {
@@ -30,18 +32,62 @@ func (r *PgRepoSites) AddDrawtToRepo(subdomain, pattern, userId string, config m
 	} else if !r.CheckSubdomainInFree(subdomain) {
 		return nil, errors.New("subdomain already taken")
 	}
-	site := models.Site{}
 
-	err := r.db.QueryRow(`
-	INSERT INTO users (user_id, subdomain, pattern, config)
-	VALUES ($1, $2, $3, $4)
-	RETURNING id, user_id, subdomain, pattern, config, status_site, created_at`, userId, subdomain, pattern, config,
-	).Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &site.Config, &site.Status, &site.CreatedAt)
+	cnfJson, err := json.Marshal(config)
 	if err != nil {
 		return nil, err
 	}
 
+	site := models.Site{}
+	var cnfBytes []byte
+	err = r.db.QueryRow(`
+	INSERT INTO sites (user_id, subdomain, pattern, config)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, user_id, subdomain, pattern, config, status_site, created_at`, userId, subdomain, pattern, cnfJson,
+	).Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &cnfBytes, &site.Status, &site.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	if err = json.Unmarshal(cnfBytes, &site.Config); err != nil {
+		return nil, err
+	}
+
+	log.Printf("===add drawt in PG===")
 	return &site, nil
+}
+
+func (r *PgRepoSites) PublishSite(siteId string) (*models.Site, error) {
+	site := models.Site{}
+	err := r.db.QueryRow(`
+	SELECT id, user_id, subdomain, pattern, config, status_site, created_at
+    FROM sites WHERE id = $1)`, siteId).Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &site.Config, &site.Status, &site.CreatedAt)
+	if err == sql.ErrNoRows {
+		return nil, errors.New("site not found")
+	}
+	if err != nil {
+		log.Printf("error find site")
+		return nil, err
+	}
+
+	if !r.CheckSubdomainInFree(site.Subdomain) {
+		return nil, errors.New("subdomain already taken")
+	}
+
+	err = r.db.QueryRow(`
+	UPDATE sites
+	SET status_site = 'published', published_at = $1
+	WHERE id = $2
+	RETURNING status_site, published_at
+	`, time.Now(), siteId).Scan(&site.Status, &site.PublishdAt)
+	if err != nil {
+		log.Printf("error update site")
+		return nil, err
+	}
+	return &site, nil
+}
+
+func (r *PgRepoSites) GetPublishBySubdomain(subdomain string) *models.Site {
+	return nil
 }
 
 func (r *PgRepoSites) CheckSubdomainInFree(subdomain string) bool {
