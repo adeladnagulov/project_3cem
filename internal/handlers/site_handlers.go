@@ -82,7 +82,7 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 	}
 	subD := subI.(string)
 
-	if subD == "" { // 🔥 Проверяем пустую строку
+	if subD == "" {
 		log.Printf("empty subdomain")
 		http.Error(w, "no subdomain provided", http.StatusBadRequest)
 		return

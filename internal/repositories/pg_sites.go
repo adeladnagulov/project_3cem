@@ -58,14 +58,19 @@ func (r *PgRepoSites) AddDrawtToRepo(subdomain, pattern, userId string, config m
 
 func (r *PgRepoSites) PublishSite(siteId string) (*models.Site, error) {
 	site := models.Site{}
+	var cnfBytes []byte
 	err := r.db.QueryRow(`
 	SELECT id, user_id, subdomain, pattern, config, status_site, created_at
-    FROM sites WHERE id = $1)`, siteId).Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &site.Config, &site.Status, &site.CreatedAt)
+    FROM sites WHERE id = $1`, siteId).Scan(&site.ID, &site.UserID, &site.Subdomain, &site.Pattern, &cnfBytes, &site.Status, &site.CreatedAt)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("site not found")
 	}
 	if err != nil {
 		log.Printf("error find site")
+		return nil, err
+	}
+
+	if err = json.Unmarshal(cnfBytes, &site.Config); err != nil {
 		return nil, err
 	}
 
