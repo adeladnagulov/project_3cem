@@ -30,7 +30,6 @@ func CreateEmailService() *MyEmailService {
 }
 
 func (s *MyEmailService) SendCodeToEmail(email, code string) error {
-	//при добавлении редиса добавить удаление старых писем
 	lastT, ok := s.LastMessage[email]
 	if ok {
 		if lastT.Add(time.Minute).After(time.Now()) {

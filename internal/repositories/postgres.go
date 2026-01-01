@@ -22,7 +22,7 @@ func NewPostgresDB() (*sql.DB, error) {
 		return nil, err
 	}
 	if err = db.Ping(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to connect to postgres %w", err)
 	}
 	return db, nil
 }

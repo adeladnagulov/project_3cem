@@ -9,7 +9,7 @@ import (
 )
 
 type RepoMemCode interface {
-	AddNewCode(code string, creator string)
+	AddNewCode(code string, creator string) error
 	ValidateCode(code string, email string) (bool, error)
 }
 
@@ -24,7 +24,7 @@ func NewMemoryRepoCodes() *MemoryRepoCodes {
 	}
 }
 
-func (r *MemoryRepoCodes) AddNewCode(code string, creator string) {
+func (r *MemoryRepoCodes) AddNewCode(code string, creator string) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -39,6 +39,7 @@ func (r *MemoryRepoCodes) AddNewCode(code string, creator string) {
 	}
 	r.Codes[creator] = &c
 	log.Printf("AddCode: %s with creator: %s", code, creator)
+	return nil
 }
 
 func (r *MemoryRepoCodes) ValidateCode(code string, email string) (bool, error) {

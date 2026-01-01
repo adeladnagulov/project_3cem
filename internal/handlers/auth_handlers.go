@@ -47,7 +47,11 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.RepoCodes.AddNewCode(code, req.Email)
+	if err = h.RepoCodes.AddNewCode(code, req.Email); err != nil {
+		log.Printf("add cpde to repo error: %s", err)
+		http.Error(w, "add cpde to repo error: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	log.Printf("Send code Done")
 	w.WriteHeader(http.StatusOK)
@@ -66,6 +70,11 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ok, err := h.RepoCodes.ValidateCode(req.Code, req.Email)
+	if err == repositories.ErrNotFound {
+		log.Println("outdated or invalid code")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

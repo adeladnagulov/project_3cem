@@ -24,11 +24,24 @@ func main() {
 	dbPostgres, err := repositories.NewPostgresDB()
 	if err != nil {
 		log.Fatalf("postgress error: %s", err.Error())
+		return
 	}
+
+	redisClient, err := repositories.NewRedisDb(repositories.RedisCnf{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+	if err != nil {
+		log.Fatalf("redis error: %s", err.Error())
+		return
+	}
+
 	handleUsers := handlers.NewUserHandler(
 		//repositories.NewMemoryRepoUsers(),
 		repositories.NewPgRepoUsers(dbPostgres),
-		repositories.NewMemoryRepoCodes(),
+		//repositories.NewMemoryRepoCodes(),
+		repositories.NewRedesRepoCodes(redisClient),
 		*services.CreateEmailService(),
 		tokenService,
 	)
