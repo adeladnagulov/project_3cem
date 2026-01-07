@@ -9,15 +9,15 @@ import (
 	"project_3sem/internal/services"
 )
 
-type UserHandle struct {
+type UserHandler struct {
 	RepoUsers    repositories.RepoUsers
 	RepoCodes    repositories.RepoMemCode
 	EmailService services.EmailService
 	TokenService services.TokenService
 }
 
-func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode, emailSer services.MyEmailService, tokenSer services.TokenService) *UserHandle {
-	return &UserHandle{
+func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMemCode, emailSer services.MyEmailService, tokenSer services.TokenService) *UserHandler {
+	return &UserHandler{
 		RepoUsers:    repoUs,
 		RepoCodes:    repoCode,
 		EmailService: &emailSer,
@@ -25,7 +25,7 @@ func NewUserHandler(repoUs repositories.RepoUsers, repoCode repositories.RepoMem
 	}
 }
 
-func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
 	}
@@ -57,7 +57,7 @@ func (h *UserHandle) SendAuthCode(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Authorization(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Email string `json:"email"`
 		Code  string `json:"code"`
@@ -117,7 +117,7 @@ func (h *UserHandle) Authorization(w http.ResponseWriter, r *http.Request) {
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }
 
-func (h *UserHandle) RefreshHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie("refresh_token")
 	if err != nil {
 		log.Printf("get token from cookie error: %s", err)

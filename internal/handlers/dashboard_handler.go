@@ -6,7 +6,7 @@ import (
 	"project_3sem/internal/responses"
 )
 
-func (h *UserHandle) DashboardHandler(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) DashboardHandler(w http.ResponseWriter, r *http.Request) {
 	id := r.Context().Value(middleware.IdKey).(string)
 	email := r.Context().Value(middleware.EmailKey).(string)
 

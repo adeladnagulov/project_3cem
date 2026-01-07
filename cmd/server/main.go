@@ -48,6 +48,9 @@ func main() {
 	handleSite := handlers.SiteHandle{
 		RepoSite: repositories.NewPgRepoSites(dbPostgres), //repositories.NewMemoryRepoSites()
 	}
+	handlePayment := handlers.NewPaymentHandler(
+		repositories.NewPgRepoPayments(dbPostgres),
+	)
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
 		return middleware.SubdomainMiddlewera(next)
@@ -67,6 +70,8 @@ func main() {
 	protected.HandleFunc("/dashboard", handleUsers.DashboardHandler).Methods("POST")
 	protected.HandleFunc("/sites/save", handleSite.SaveDraft).Methods("POST")
 	protected.HandleFunc("/sites/{id}/publish", handleSite.Publish).Methods("POST")
+
+	protected.HandleFunc("/payment/create", handlePayment.CreatePayments).Methods("POST")
 
 	r.HandleFunc("/site-config", handleSite.RenderSite).Methods("GET")
 
