@@ -7,23 +7,38 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"project_3sem/internal/middleware"
 	"project_3sem/internal/repositories"
 	"project_3sem/internal/responses"
+	"project_3sem/internal/services"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 )
 
-type PaymentHandler struct {
-	RepoPayments repositories.PgPayments
+var YooKassaIPs = []string{
+	"185.71.76.0/27",
+	"185.71.77.0/27",
+	"77.75.153.0/25",
+	"77.75.156.11",
+	"77.75.156.35",
+	"77.75.154.128/25",
+	"2a02:5180::/32",
 }
 
-func NewPaymentHandler(repoPayments repositories.PgPayments) *PaymentHandler {
+type PaymentHandler struct {
+	RepoPayments repositories.PgPayments
+	RepoUsers    repositories.RepoUsers
+}
+
+func NewPaymentHandler(repoPayments repositories.PgPayments, repoUsers repositories.PgRepoUsers) *PaymentHandler {
 	return &PaymentHandler{
 		RepoPayments: repoPayments,
+		RepoUsers:    &repoUsers,
 	}
 }
 
@@ -145,4 +160,75 @@ func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) 
 		"status":           yooResp.Status,
 	}
 	responses.SendJSONResp(w, response, http.StatusOK)
+}
+
+func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) {
+	ip := r.Header.Get("X-Forwarded-For")
+	log.Println(ip)
+	if !IsYooKassaIp(ip) {
+		log.Println("Uncurrent ip")
+		return
+	}
+
+	var req struct {
+		Object struct {
+			Id     string `json:"id"`
+			Status string `json:"status"`
+		} `json:"object"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println("decode error" + err.Error())
+		http.Error(w, "bad request: "+err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	payment, err := h.RepoPayments.UpdateStatus(req.Object.Id, req.Object.Status)
+	if err != nil {
+		log.Println("Upate data error: " + err.Error())
+		return
+	}
+
+	user, err := h.RepoUsers.GetUserByID(payment.User_id)
+	if err != nil {
+		log.Println("get user error: " + err.Error())
+		return
+	}
+
+	message := ""
+	if payment.Status == "succeeded" {
+		message = fmt.Sprintf("Платёж %s на сумму %.2f %s прошел успешно", payment.Yookassa_payment_id, payment.Amount, payment.Currency)
+	} else {
+		message = fmt.Sprintf("Платёж %s отменён", payment.Yookassa_payment_id)
+	}
+
+	err = services.CreateEmailService().SendCodeToEmail(user.Email, message)
+	if err != nil {
+		log.Println("send message error: " + err.Error())
+		return
+	}
+	log.Printf("send massage: %s to email: %s done", message, user.Email)
+}
+
+func IsYooKassaIp(ipstr string) bool {
+	ip := net.ParseIP(ipstr)
+	if ip == nil {
+		return false
+	}
+	for _, yooKAssaip := range YooKassaIPs {
+		if strings.Contains(yooKAssaip, "/") {
+			_, ipNet, err := net.ParseCIDR(yooKAssaip)
+			if err != nil {
+				continue
+			}
+			if ipNet.Contains(ip) {
+				return true
+			}
+		} else {
+			certainIp := net.ParseIP(yooKAssaip)
+			if certainIp != nil && certainIp.Equal(ip) {
+				return true
+			}
+		}
+	}
+	return false
 }

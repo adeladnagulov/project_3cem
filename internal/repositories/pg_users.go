@@ -28,13 +28,11 @@ func (r *PgRepoUsers) Authorization(email string) (*models.User, error) {
 	return &u, nil
 }
 
-func (r *PgRepoUsers) GetUserByID(id string) *models.User {
+func (r *PgRepoUsers) GetUserByID(id string) (*models.User, error) {
 	u := models.User{}
 
 	err := r.db.QueryRow(`
 	SELECT id, email FROM users WHERE id = $1`, id).Scan(&u.ID, &u.Email)
-	if err != nil {
-		return nil
-	}
-	return &u
+
+	return &u, err
 }

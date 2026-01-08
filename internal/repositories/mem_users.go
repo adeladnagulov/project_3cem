@@ -10,7 +10,7 @@ import (
 
 type RepoUsers interface {
 	Authorization(email string) (*models.User, error)
-	GetUserByID(id string) *models.User
+	GetUserByID(id string) (*models.User, error)
 }
 
 type MemoryRepoUsers struct {

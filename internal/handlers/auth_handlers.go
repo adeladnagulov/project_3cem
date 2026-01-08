@@ -132,9 +132,9 @@ func (h *UserHandler) RefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := h.RepoUsers.GetUserByID(id)
-	if user == nil {
-		log.Printf("user == nil")
+	user, err := h.RepoUsers.GetUserByID(id)
+	if err != nil {
+		log.Println("GetUserByID error: " + err.Error())
 		http.Error(w, "invalid user", http.StatusUnauthorized)
 		return
 	}

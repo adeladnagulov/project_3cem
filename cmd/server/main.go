@@ -37,9 +37,10 @@ func main() {
 		return
 	}
 
+	userRepo := repositories.NewPgRepoUsers(dbPostgres)
 	handleUsers := handlers.NewUserHandler(
 		//repositories.NewMemoryRepoUsers(),
-		repositories.NewPgRepoUsers(dbPostgres),
+		userRepo,
 		//repositories.NewMemoryRepoCodes(),
 		repositories.NewRedesRepoCodes(redisClient),
 		*services.CreateEmailService(),
@@ -50,6 +51,7 @@ func main() {
 	}
 	handlePayment := handlers.NewPaymentHandler(
 		repositories.NewPgRepoPayments(dbPostgres),
+		*userRepo,
 	)
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
@@ -62,6 +64,8 @@ func main() {
 	r.HandleFunc("/api/v1/auth/login", handleUsers.SendAuthCode).Methods("POST")
 	r.HandleFunc("/api/v1/auth/confirm", handleUsers.Authorization).Methods("POST")
 	r.HandleFunc("/api/v1/auth/refresh", handleUsers.RefreshHandler).Methods("POST")
+
+	r.HandleFunc("/api/v1/payment/webhook", handlePayment.PaymentWebhook).Methods("POST")
 
 	protected := r.PathPrefix("/api/v1/me").Subrouter()
 	protected.Use(func(next http.Handler) http.Handler {

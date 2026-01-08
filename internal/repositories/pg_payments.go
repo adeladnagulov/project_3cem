@@ -3,11 +3,13 @@ package repositories
 import (
 	"database/sql"
 	"errors"
+	"project_3sem/internal/models"
 	"strconv"
 )
 
 type PgPayments interface {
 	SavePayment(yookassaID, status, amountStr, currency, description, site_id, user_id string) error
+	UpdateStatus(yookassaID, status string) (*models.Payment, error)
 }
 
 type PgRepoPayments struct {
@@ -29,4 +31,16 @@ func (r *PgRepoPayments) SavePayment(yookassaID, status, amountStr, currency, de
 	INSERT INTO payments (yookassa_payment_id, status, amount, currency, description, user_id, sites_id)
 	VALUES ($1, $2, $3, $4, $5, $6, $7)`, yookassaID, status, amount, currency, description, user_id, site_id)
 	return err
+}
+
+func (r *PgRepoPayments) UpdateStatus(yookassaID, status string) (*models.Payment, error) {
+	payment := models.Payment{}
+	err := r.db.QueryRow(`
+	UPDATE payments
+	SET status = $1
+	WHERE yookassa_payment_id = $2
+	RETURNING id, user_id, sites_id, yookassa_payment_id, status, amount, currency, description
+	`, status, yookassaID).Scan(&payment.Id, &payment.User_id, &payment.Site_id, &payment.Yookassa_payment_id, &payment.Status,
+		&payment.Amount, &payment.Currency, &payment.Description)
+	return &payment, err
 }
