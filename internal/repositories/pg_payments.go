@@ -7,9 +7,10 @@ import (
 	"strconv"
 )
 
-type PgPayments interface {
+type RepoPayments interface {
 	SavePayment(yookassaID, status, amountStr, currency, description, site_id, user_id string) error
 	UpdateStatus(yookassaID, status string) (*models.Payment, error)
+	CheckStatus(siteId string) (string, error)
 }
 
 type PgRepoPayments struct {
@@ -43,4 +44,12 @@ func (r *PgRepoPayments) UpdateStatus(yookassaID, status string) (*models.Paymen
 	`, status, yookassaID).Scan(&payment.Id, &payment.User_id, &payment.Site_id, &payment.Yookassa_payment_id, &payment.Status,
 		&payment.Amount, &payment.Currency, &payment.Description)
 	return &payment, err
+}
+
+func (r *PgRepoPayments) CheckStatus(siteId string) (string, error) {
+	status := ""
+	err := r.db.QueryRow(`
+	SELECT status
+	FROM payments WHERE sites_id = $1`, siteId).Scan(&status)
+	return status, err
 }

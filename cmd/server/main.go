@@ -38,19 +38,20 @@ func main() {
 	}
 
 	userRepo := repositories.NewPgRepoUsers(dbPostgres)
+	siteRepo := repositories.NewPgRepoSites(dbPostgres)
+	paymentRepo := repositories.NewPgRepoPayments(dbPostgres)
 	handleUsers := handlers.NewUserHandler(
-		//repositories.NewMemoryRepoUsers(),
 		userRepo,
-		//repositories.NewMemoryRepoCodes(),
 		repositories.NewRedesRepoCodes(redisClient),
 		*services.CreateEmailService(),
 		tokenService,
 	)
-	handleSite := handlers.SiteHandle{
-		RepoSite: repositories.NewPgRepoSites(dbPostgres), //repositories.NewMemoryRepoSites()
-	}
+	handleSite := handlers.NewSiteHandler(
+		siteRepo,
+		paymentRepo,
+	)
 	handlePayment := handlers.NewPaymentHandler(
-		repositories.NewPgRepoPayments(dbPostgres),
+		paymentRepo,
 		*userRepo,
 	)
 	r := mux.NewRouter()

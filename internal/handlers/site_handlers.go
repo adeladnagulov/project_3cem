@@ -12,12 +12,14 @@ import (
 )
 
 type SiteHandle struct {
-	RepoSite repositories.RepoSite
+	RepoSite    repositories.RepoSite
+	RepoPayment repositories.RepoPayments
 }
 
-func NewSiteHandler(repoSite repositories.RepoSite) *SiteHandle {
+func NewSiteHandler(repoSite repositories.RepoSite, repoPayment repositories.RepoPayments) *SiteHandle {
 	return &SiteHandle{
-		RepoSite: repoSite,
+		RepoSite:    repoSite,
+		RepoPayment: repoPayment,
 	}
 }
 
@@ -56,6 +58,12 @@ func (h *SiteHandle) Publish(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	siteId := vars["id"]
 	log.Printf("site id: %s", siteId)
+	paymentStatus, err := h.RepoPayment.CheckStatus(siteId)
+	if err != nil || paymentStatus != "succeeded" {
+		log.Printf("payment status = %s, error = %s", paymentStatus, err)
+		http.Error(w, "access is restricted", http.StatusForbidden)
+		return
+	}
 
 	site, err := h.RepoSite.PublishSite(siteId)
 	if err != nil {
@@ -92,6 +100,11 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 	if site == nil {
 		log.Printf("not found site")
 		http.Error(w, "not found site", http.StatusNotFound)
+		return
+	}
+	if site.Status != "published" {
+		log.Println("site not published")
+		http.Error(w, "site not published", http.StatusNotFound)
 		return
 	}
 

@@ -20,6 +20,9 @@ import (
 	"github.com/google/uuid"
 )
 
+var SitePrise = 199.00
+var SiteCurrency = "RUB"
+
 var YooKassaIPs = []string{
 	"185.71.76.0/27",
 	"185.71.77.0/27",
@@ -31,11 +34,11 @@ var YooKassaIPs = []string{
 }
 
 type PaymentHandler struct {
-	RepoPayments repositories.PgPayments
+	RepoPayments repositories.RepoPayments
 	RepoUsers    repositories.RepoUsers
 }
 
-func NewPaymentHandler(repoPayments repositories.PgPayments, repoUsers repositories.PgRepoUsers) *PaymentHandler {
+func NewPaymentHandler(repoPayments repositories.RepoPayments, repoUsers repositories.PgRepoUsers) *PaymentHandler {
 	return &PaymentHandler{
 		RepoPayments: repoPayments,
 		RepoUsers:    &repoUsers,
@@ -71,11 +74,11 @@ type YooKassaResponse struct {
 
 func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		Value       float64 `json:"value"`
-		Currency    string  `json:"currency"`
-		Return_url  string  `json:"return_url"`
-		Description string  `json:"description"`
-		Site_ID     string  `json:"site_id"`
+		//Value       float64 `json:"value"`
+		//Currency    string  `json:"currency"`
+		Return_url  string `json:"return_url"`
+		Description string `json:"description"`
+		Site_ID     string `json:"site_id"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println("decode error" + err.Error())
@@ -88,8 +91,8 @@ func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) 
 			Value    string "json:\"value\""
 			Currency string "json:\"currency\""
 		}{
-			Value:    fmt.Sprintf("%.2f", req.Value),
-			Currency: req.Currency,
+			Value:    fmt.Sprintf("%.2f", SitePrise), //цена фикс
+			Currency: SiteCurrency,
 		},
 		Capture: true,
 		Confirmation: struct {
