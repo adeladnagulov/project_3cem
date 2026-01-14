@@ -40,6 +40,8 @@ func main() {
 	userRepo := repositories.NewPgRepoUsers(dbPostgres)
 	siteRepo := repositories.NewPgRepoSites(dbPostgres)
 	paymentRepo := repositories.NewPgRepoPayments(dbPostgres)
+	orderRepo := repositories.NewPgRepoOrders(dbPostgres)
+	orderPaymentRepo := repositories.NewPgRepoOrdersPayments(dbPostgres)
 	handleUsers := handlers.NewUserHandler(
 		userRepo,
 		repositories.NewRedesRepoCodes(redisClient),
@@ -53,6 +55,11 @@ func main() {
 	handlePayment := handlers.NewPaymentHandler(
 		paymentRepo,
 		*userRepo,
+	)
+	handleOrder := handlers.NewOrderHandler(
+		*siteRepo,
+		orderRepo,
+		orderPaymentRepo,
 	)
 	r := mux.NewRouter()
 	r.Use(func(next http.Handler) http.Handler {
@@ -79,6 +86,8 @@ func main() {
 	protected.HandleFunc("/payment/create", handlePayment.CreatePayments).Methods("POST")
 
 	r.HandleFunc("/site-config", handleSite.RenderSite).Methods("GET")
+
+	r.HandleFunc("/basket/payment", handleOrder.BasketPayment).Methods("POST")
 
 	fmt.Println("Start server to: 8080")
 	log.Fatal(http.ListenAndServe(":8080", r))

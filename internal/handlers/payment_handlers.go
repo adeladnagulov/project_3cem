@@ -72,7 +72,8 @@ type YooKassaResponse struct {
 	Paid bool `json:"paid"`
 }
 
-func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) {
+func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) { //нужен рефакторинг
+	log.Println("===start payment===")
 	var req struct {
 		//Value       float64 `json:"value"`
 		//Currency    string  `json:"currency"`

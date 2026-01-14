@@ -26,3 +26,21 @@ CREATE TABLE payments (
     currency VARCHAR(3) NOT NULL DEFAULT 'RUB',
     description TEXT
 );
+
+CREATE TABLE orders (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    site_id UUID REFERENCES sites(id) ON DELETE CASCADE,
+    items JSONB NOT NULL DEFAULT '{}',
+    total_amount DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'not paid'
+);
+
+CREATE TABLE orders_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    sites_id UUID REFERENCES sites(id) ON DELETE SET NULL,
+    yookassa_payment_id VARCHAR(255) NOT NULL,
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    amount DECIMAL(10, 2) NOT NULL,
+    currency VARCHAR(3) NOT NULL DEFAULT 'RUB',
+    description TEXT
+);

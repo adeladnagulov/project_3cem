@@ -2,7 +2,7 @@ package middleware
 
 import "net/http"
 
-var address string = "https://a58303fe-52a8-41f5-9ac1-d333a646f9b5.tunnel4.com"
+var address string = "https://37bc25f4-9e40-4cbf-952c-e77f17606e06.tunnel4.com"
 
 func CORSmiddlewera(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
