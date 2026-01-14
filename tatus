@@ -1,0 +1,34 @@
+[33m1e38bc0[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m add Basket Payment
+[33mc7e6978[m fix business logic
+[33m2510f57[m add webhook handler
+[33m010f1c0[m add create payment fitcher
+[33mffb8080[m replacement code repo to redis
+[33m92245a7[m render site in postgress done
+[33m135ba5f[m publish in postgress done
+[33m07725fc[m save drawt in postgress done
+[33m87a44dc[m redone add to repo for pg
+[33m6298983[m add pg users
+[33m15b70b7[m CORS middleware and postgres struct
+[33m8bd7aaf[m add rendering
+[33m1ea46d6[m add publish
+[33m159e743[m add route SaveDrawt and fix dashboard resp
+[33m92741ff[m add SubdomainMiddlewera
+[33md476ed0[m add CheckSubdomain
+[33md7c02e2[m add routing to site
+[33m6997441[m add sevinf drawt
+[33m3162bef[m refactoring response
+[33m69f7a29[m done authorization
+[33m0ca8c39[m add refresh handler
+[33mbff80b6[m rework access_token and add refresh_token
+[33md124824[m add rate limiting code
+[33m11ea0fb[m code type int->string
+[33m0383e76[m Fix arhitectural issues
+[33ma062aad[m Add base validate email
+[33m4de4a23[m protection jwtKey
+[33m2c71b58[m add jwt token & id
+[33mbde361d[m Done Auth with Memoty repo
+[33m9a04c3b[m Add struct code and reverse first handler
+[33me48ff57[m Authorization without a code
+[33m8ed4868[m New Start
+[33md91e234[m Created Vue, registration and login page
+[33mecaacd1[m Start

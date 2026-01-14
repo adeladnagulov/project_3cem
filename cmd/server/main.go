@@ -55,6 +55,8 @@ func main() {
 	handlePayment := handlers.NewPaymentHandler(
 		paymentRepo,
 		*userRepo,
+		orderPaymentRepo,
+		orderRepo,
 	)
 	handleOrder := handlers.NewOrderHandler(
 		*siteRepo,
@@ -84,6 +86,9 @@ func main() {
 	protected.HandleFunc("/sites/{id}/publish", handleSite.Publish).Methods("POST")
 
 	protected.HandleFunc("/payment/create", handlePayment.CreatePayments).Methods("POST")
+
+	protected.HandleFunc("/orders/statuses", handleOrder.GetOrderStatuses).Methods("GET")
+	protected.HandleFunc("/sellers/balances", handleOrder.GetSellerBalances).Methods("GET")
 
 	r.HandleFunc("/site-config", handleSite.RenderSite).Methods("GET")
 

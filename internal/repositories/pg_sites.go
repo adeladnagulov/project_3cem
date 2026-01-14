@@ -125,3 +125,28 @@ func (r *PgRepoSites) CheckSubdomainInFree(subdomain string) bool {
 	}
 	return !exists
 }
+
+func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
+	var sites []models.Site
+	rows, err := r.db.Query(`
+        SELECT id, subdomain, pattern, config, status_site, created_at, published_at 
+        FROM sites 
+        WHERE user_id = $1 AND status_site = 'published'`, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var site models.Site
+		var config []byte
+		err := rows.Scan(&site.ID, &site.Subdomain, &site.Pattern, &config, &site.Status, &site.CreatedAt, &site.PublishdAt)
+		if err != nil {
+			return nil, err
+		}
+		json.Unmarshal(config, &site.Config)
+		sites = append(sites, site)
+	}
+
+	return sites, nil
+}

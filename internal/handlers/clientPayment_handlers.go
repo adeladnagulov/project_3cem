@@ -56,7 +56,7 @@ func (h *OrderHandler) BasketPayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = h.RepoOrdersPayments.SaveOrderPayment(yooResp.Id, yooResp.Status, yooResp.Amount.Value,
-		yooResp.Amount.Currency, yooResp.Description, site.ID)
+		yooResp.Amount.Currency, yooResp.Description, site.ID, orderId)
 	if err != nil {
 		log.Println("SaveOrderPayment error: " + err.Error())
 		http.Error(w, "Dont save order payment", http.StatusInternalServerError)
@@ -80,5 +80,3 @@ func (h *OrderHandler) BasketPayment(w http.ResponseWriter, r *http.Request) {
 	}
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }
-
-//вебхук

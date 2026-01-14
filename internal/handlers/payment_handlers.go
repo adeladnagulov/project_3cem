@@ -34,14 +34,19 @@ var YooKassaIPs = []string{
 }
 
 type PaymentHandler struct {
-	RepoPayments repositories.RepoPayments
-	RepoUsers    repositories.RepoUsers
+	RepoPayments       repositories.RepoPayments
+	RepoUsers          repositories.RepoUsers
+	RepoOrdersPayments repositories.RepoOrdersPayments
+	RepoOrders         repositories.RepoOrders
 }
 
-func NewPaymentHandler(repoPayments repositories.RepoPayments, repoUsers repositories.PgRepoUsers) *PaymentHandler {
+func NewPaymentHandler(repoPayments repositories.RepoPayments, repoUsers repositories.PgRepoUsers,
+	repoOrdersPayments repositories.RepoOrdersPayments, repoOrders repositories.RepoOrders) *PaymentHandler {
 	return &PaymentHandler{
-		RepoPayments: repoPayments,
-		RepoUsers:    &repoUsers,
+		RepoPayments:       repoPayments,
+		RepoUsers:          &repoUsers,
+		RepoOrdersPayments: repoOrdersPayments,
+		RepoOrders:         repoOrders,
 	}
 }
 
@@ -167,10 +172,11 @@ func (h *PaymentHandler) CreatePayments(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) {
-	ip := r.Header.Get("X-Forwarded-For")
-	log.Println(ip)
+	ip := getRealIP(r)
+	log.Printf("Webhook received from IP: %s", ip)
 	if !IsYooKassaIp(ip) {
-		log.Println("Uncurrent ip")
+		log.Printf("Invalid YooKassa IP: %s", ip)
+		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
 	}
 
@@ -181,36 +187,80 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		} `json:"object"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		log.Println("decode error" + err.Error())
-		http.Error(w, "bad request: "+err.Error(), http.StatusBadRequest)
+		log.Printf("Decode error: %s", err.Error())
+		http.Error(w, "Bad request: "+err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Сначала проверяем, является ли это оплата заказа (корзины)
+	orderPayment, err := h.RepoOrdersPayments.GetByYookassaID(req.Object.Id)
+	if err == nil {
+		// Это оплата заказа
+		log.Printf("Processing order payment webhook: %s, status: %s", req.Object.Id, req.Object.Status)
+
+		// Обновляем статус платежа заказа
+		if err := h.RepoOrdersPayments.UpdateStatus(req.Object.Id, req.Object.Status); err != nil {
+			log.Printf("Update order payment status error: %s", err.Error())
+		}
+
+		// Если платеж успешный, обновляем статус заказа
+		if req.Object.Status == "succeeded" {
+			if err := h.RepoOrders.UpdateOrderStatus(orderPayment.OrderID.String(), "paid"); err != nil {
+				log.Printf("Update order status error: %s", err.Error())
+			}
+		}
+
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	// Если не найден как оплата заказа, проверяем как оплату сайта (поддомена)
 	payment, err := h.RepoPayments.UpdateStatus(req.Object.Id, req.Object.Status)
 	if err != nil {
-		log.Println("Upate data error: " + err.Error())
+		log.Printf("Update site payment status error: %s", err.Error())
+		http.Error(w, "Payment not found", http.StatusNotFound)
 		return
 	}
 
+	// Отправка уведомления для оплаты сайта
 	user, err := h.RepoUsers.GetUserByID(payment.User_id)
 	if err != nil {
-		log.Println("get user error: " + err.Error())
+		log.Printf("Get user error: %s", err.Error())
+		// Не возвращаем ошибку, так как платеж уже обновлен
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
 	message := ""
-	if payment.Status == "succeeded" {
+	if req.Object.Status == "succeeded" {
 		message = fmt.Sprintf("Платёж %s на сумму %.2f %s прошел успешно", payment.Yookassa_payment_id, payment.Amount, payment.Currency)
 	} else {
 		message = fmt.Sprintf("Платёж %s отменён", payment.Yookassa_payment_id)
 	}
 
-	err = services.CreateEmailService().SendCodeToEmail(user.Email, message)
-	if err != nil {
-		log.Println("send message error: " + err.Error())
-		return
+	if err := services.CreateEmailService().SendCodeToEmail(user.Email, message); err != nil {
+		log.Printf("Send email error: %s", err.Error())
 	}
-	log.Printf("send massage: %s to email: %s done", message, user.Email)
+
+	log.Printf("Notification sent: %s to email: %s", message, user.Email)
+	w.WriteHeader(http.StatusOK)
+}
+
+// Вспомогательная функция для получения реального IP
+func getRealIP(r *http.Request) string {
+	// Проверяем X-Forwarded-For сначала
+	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
+		// Берем первый IP из списка (если их несколько)
+		ips := strings.Split(forwarded, ",")
+		return strings.TrimSpace(ips[0])
+	}
+
+	// Если нет X-Forwarded-For, используем RemoteAddr
+	ip, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+	return ip
 }
 
 func IsYooKassaIp(ipstr string) bool {
