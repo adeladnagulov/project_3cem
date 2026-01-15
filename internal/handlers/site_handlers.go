@@ -117,3 +117,20 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 	log.Printf("render done!")
 	responses.SendJSONResp(w, resp, http.StatusOK)
 }
+
+func (h *SiteHandle) GetUserSites(w http.ResponseWriter, r *http.Request) {
+	userId := r.Context().Value(middleware.IdKey).(string)
+
+	sites, err := h.RepoSite.GetUserSites(userId)
+	if err != nil {
+		log.Printf("Ошибка получения сайтов пользователя: %v", err)
+		http.Error(w, "Ошибка получения данных", http.StatusInternalServerError)
+		return
+	}
+
+	resp := map[string]interface{}{
+		"sites": sites,
+	}
+
+	responses.SendJSONResp(w, resp, http.StatusOK)
+}

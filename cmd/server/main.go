@@ -84,6 +84,7 @@ func main() {
 	protected.HandleFunc("/dashboard", handleUsers.DashboardHandler).Methods("POST")
 	protected.HandleFunc("/sites/save", handleSite.SaveDraft).Methods("POST")
 	protected.HandleFunc("/sites/{id}/publish", handleSite.Publish).Methods("POST")
+	protected.HandleFunc("/sites", handleSite.GetUserSites).Methods("GET")
 
 	protected.HandleFunc("/payment/create", handlePayment.CreatePayments).Methods("POST")
 

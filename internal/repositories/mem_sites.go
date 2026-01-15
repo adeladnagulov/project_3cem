@@ -15,6 +15,7 @@ type RepoSite interface {
 	PublishSite(siteId string) (*models.Site, error)
 	GetPublishBySubdomain(subdomain string) *models.Site
 	CheckSubdomainInFree(subdomain string) bool
+	GetUserSites(userId string) ([]models.Site, error)
 }
 
 type MemoryRepoSites struct {

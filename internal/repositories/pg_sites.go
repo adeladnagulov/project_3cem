@@ -131,7 +131,8 @@ func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
 	rows, err := r.db.Query(`
         SELECT id, subdomain, pattern, config, status_site, created_at, published_at 
         FROM sites 
-        WHERE user_id = $1 AND status_site = 'published'`, userId)
+        WHERE user_id = $1 
+        ORDER BY created_at DESC`, userId) // Убрано условие на статус и добавлена сортировка
 	if err != nil {
 		return nil, err
 	}
@@ -140,12 +141,29 @@ func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
 	for rows.Next() {
 		var site models.Site
 		var config []byte
-		err := rows.Scan(&site.ID, &site.Subdomain, &site.Pattern, &config, &site.Status, &site.CreatedAt, &site.PublishdAt)
+		var publishedAt sql.NullTime // Используем sql.NullTime для обработки NULL значений
+
+		err := rows.Scan(&site.ID, &site.Subdomain, &site.Pattern, &config, &site.Status, &site.CreatedAt, &publishedAt)
 		if err != nil {
 			return nil, err
 		}
-		json.Unmarshal(config, &site.Config)
+
+		// Присваиваем опубликованную дату
+		site.PublishdAt = publishedAt
+
+		// Парсим конфиг
+		if config != nil {
+			json.Unmarshal(config, &site.Config)
+		} else {
+			site.Config = make(map[string]interface{})
+		}
+
 		sites = append(sites, site)
+	}
+
+	// Проверяем ошибки после цикла
+	if err = rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return sites, nil
