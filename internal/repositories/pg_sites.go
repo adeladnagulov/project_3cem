@@ -132,7 +132,7 @@ func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
         SELECT id, subdomain, pattern, config, status_site, created_at, published_at 
         FROM sites 
         WHERE user_id = $1 
-        ORDER BY created_at DESC`, userId) // Убрано условие на статус и добавлена сортировка
+        ORDER BY created_at DESC`, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -141,17 +141,15 @@ func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
 	for rows.Next() {
 		var site models.Site
 		var config []byte
-		var publishedAt sql.NullTime // Используем sql.NullTime для обработки NULL значений
+		var publishedAt sql.NullTime
 
 		err := rows.Scan(&site.ID, &site.Subdomain, &site.Pattern, &config, &site.Status, &site.CreatedAt, &publishedAt)
 		if err != nil {
 			return nil, err
 		}
 
-		// Присваиваем опубликованную дату
 		site.PublishdAt = publishedAt
 
-		// Парсим конфиг
 		if config != nil {
 			json.Unmarshal(config, &site.Config)
 		} else {
@@ -161,7 +159,6 @@ func (r *PgRepoSites) GetUserSites(userId string) ([]models.Site, error) {
 		sites = append(sites, site)
 	}
 
-	// Проверяем ошибки после цикла
 	if err = rows.Err(); err != nil {
 		return nil, err
 	}

@@ -12,7 +12,6 @@ import (
 func (h *OrderHandler) GetOrderStatuses(w http.ResponseWriter, r *http.Request) {
 	userId := r.Context().Value(middleware.IdKey).(string)
 
-	// Получаем все сайты пользователя
 	sites, err := h.RepoSites.GetUserSites(userId)
 	if err != nil {
 		log.Printf("Ошибка получения сайтов: %v", err)
@@ -22,7 +21,6 @@ func (h *OrderHandler) GetOrderStatuses(w http.ResponseWriter, r *http.Request) 
 
 	var allOrders []map[string]interface{}
 
-	// Для каждого сайта получаем заказы
 	for _, site := range sites {
 		orders, err := h.RepoOrders.GetOrdersBySiteID(site.ID)
 		if err != nil {
@@ -70,7 +68,7 @@ func (h *OrderHandler) GetSellerBalances(w http.ResponseWriter, r *http.Request)
 	balances := make(map[string]float64)
 
 	for _, site := range sites {
-		// Суммируем успешные платежи по заказам
+
 		paidOrders, err := h.RepoOrders.GetPaidOrdersAmountBySiteID(site.ID)
 		if err != nil {
 			log.Printf("Ошибка получения суммы оплаченных заказов для сайта %s: %v", site.ID, err)

@@ -192,18 +192,15 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Сначала проверяем, является ли это оплата заказа (корзины)
+	// Сначала проверяем, является ли это оплата корзины
 	orderPayment, err := h.RepoOrdersPayments.GetByYookassaID(req.Object.Id)
 	if err == nil {
-		// Это оплата заказа
 		log.Printf("Processing order payment webhook: %s, status: %s", req.Object.Id, req.Object.Status)
 
-		// Обновляем статус платежа заказа
 		if err := h.RepoOrdersPayments.UpdateStatus(req.Object.Id, req.Object.Status); err != nil {
 			log.Printf("Update order payment status error: %s", err.Error())
 		}
 
-		// Если платеж успешный, обновляем статус заказа
 		if req.Object.Status == "succeeded" {
 			if err := h.RepoOrders.UpdateOrderStatus(orderPayment.OrderID.String(), "paid"); err != nil {
 				log.Printf("Update order status error: %s", err.Error())
@@ -222,11 +219,9 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Отправка уведомления для оплаты сайта
 	user, err := h.RepoUsers.GetUserByID(payment.User_id)
 	if err != nil {
 		log.Printf("Get user error: %s", err.Error())
-		// Не возвращаем ошибку, так как платеж уже обновлен
 		w.WriteHeader(http.StatusOK)
 		return
 	}
@@ -246,16 +241,12 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusOK)
 }
 
-// Вспомогательная функция для получения реального IP
 func getRealIP(r *http.Request) string {
-	// Проверяем X-Forwarded-For сначала
 	if forwarded := r.Header.Get("X-Forwarded-For"); forwarded != "" {
-		// Берем первый IP из списка (если их несколько)
 		ips := strings.Split(forwarded, ",")
 		return strings.TrimSpace(ips[0])
 	}
 
-	// Если нет X-Forwarded-For, используем RemoteAddr
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		return r.RemoteAddr

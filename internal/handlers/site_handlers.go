@@ -102,6 +102,7 @@ func (h *SiteHandle) RenderSite(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found site", http.StatusNotFound)
 		return
 	}
+
 	if site.Status != "published" {
 		log.Println("site not published")
 		http.Error(w, "site not published", http.StatusNotFound)
