@@ -16,13 +16,13 @@ Pet-project backend для платформы создания интернет-
   - go-redis (клиент Redis)
   - JWT для аутентификации
 
-## Архитектура
+## Архитектура  
 
 Проект построен по принципам Clean Architecture с четким разделением на слои:
-internal/
-├── handlers/ # HTTP обработчики запросов
-├── middleware/ # Цепочка middleware
-├── repositories/ # Работа с источниками данных
-├── services/ # Бизнес-логика
-└── models/ # Доменные модели
+- **internal/**
+  - handlers/ # HTTP обработчики запросов
+  - middleware/ # Цепочка middleware
+  - repositories/ # Работа с источниками данных
+  - services/ # Бизнес-логика
+  - models/ # Доменные модели
 
